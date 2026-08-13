@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulir Lamaran Kerja - Admin Keuangan</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 480px;
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #1e3a8a;
+      font-size: 22px;
+      text-align: center;
+    }
+    .card p {
+      text-align: center;
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #334155;
+      font-size: 14px;
+    }
+    input[type="text"],
+    input[type="tel"],
+    input[type="email"],
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus {
+      border-color: #2563eb;
+    }
+    .btn {
+      width: 100%;
+      background-color: #2563eb;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background-color: #1d4ed8;
+    }
+    .btn:disabled {
+      background-color: #94a3b8;
+      cursor: not-allowed;
+    }
+    #statusMsg {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .success { color: #16a34a; }
+    .error { color: #dc2626; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Pendaftaran Admin Keuangan</h2>
+    <p>Klinik Sinar Surya Kertajati</p>
+
+    <form id="applicantForm">
+      <div class="form-group">
+        <label for="nama">Nama Lengkap</label>
+        <input type="text" id="nama" required placeholder="Contoh: Budi Santoso">
+      </div>
+
+      <div class="form-group">
+        <label for="whatsapp">Nomor WhatsApp</label>
+        <input type="tel" id="whatsapp" required placeholder="Contoh: 08123456789">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Alamat Email</label>
+        <input type="email" id="email" required placeholder="nama@email.com">
+      </div>
+
+      <div class="form-group">
+        <label for="cvFile">Unggah CV (Format PDF, Maks 5MB)</label>
+        <input type="file" id="cvFile" accept=".pdf" required>
+      </div>
+
+      <button type="submit" class="btn" id="submitBtn">Kirim Lamaran</button>
+    </form>
+
+    <div id="statusMsg"></div>
+  </div>
+
+  <script>
+    // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyycH0buqyLMgt1lTuGpZw65lQf7BJk-48j1m5IKYpvDeu9LaCafjpUqeq2yC4eMO6m/exec";
+
+    document.getElementById('applicantForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      const statusMsg = document.getElementById('statusMsg');
+      const fileInput = document.getElementById('cvFile');
+      const file = fileInput.files[0];
+
+      if (file && file.size > 5 * 1024 * 1024) {
+        statusMsg.className = 'error';
+        statusMsg.innerText = 'Ukuran file maksimal 5MB!';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Mengirim...';
+      statusMsg.innerText = '';
+
+      // Konversi File PDF ke Base64
+      const reader = new FileReader();
+      reader.onload = async function() {
+        const base64Data = reader.result.split(',')[1];
+
+        const payload = {
+          nama: document.getElementById('nama').value,
+          whatsapp: document.getElementById('whatsapp').value,
+          email: document.getElementById('email').value,
+          fileName: file.name,
+          fileMimeType: file.type,
+          fileData: base64Data
+        };
+
+        try {
+          const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+          });
+
+          const result = await response.json();
+
+          if (result.status === 'success') {
+            statusMsg.className = 'success';
+            statusMsg.innerText = 'Terima kasih! Lamaran Anda berhasil dikirim.';
+            document.getElementById('applicantForm').reset();
+          } else {
+            throw new Error(result.message);
+          }
+        } catch (err) {
+          statusMsg.className = 'error';
+          statusMsg.innerText = 'Gagal mengirim lamaran. Silakan coba lagi.';
+          console.error(err);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Kirim Lamaran';
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
